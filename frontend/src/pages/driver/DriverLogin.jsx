@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { api } from '../../services/api';
-import { Truck, ShieldCheck, ArrowRight, UserCheck } from 'lucide-react';
+import { Truck, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 
-export default function DriverLogin({ onLoginSuccess, onSwitchToManager }) {
+export default function DriverLogin({ onLoginSuccess, onSwitchToManager, onBackToWelcome }) {
   const [email, setEmail] = useState('driver1@revroute.ai');
   const [password, setPassword] = useState('password');
   const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ export default function DriverLogin({ onLoginSuccess, onSwitchToManager }) {
       const user = await api.login({ email, password });
       onLoginSuccess(user);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -30,6 +30,16 @@ export default function DriverLogin({ onLoginSuccess, onSwitchToManager }) {
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-5 sm:p-8 space-y-6">
+        {/* Back to Welcome Page Button */}
+        {onBackToWelcome && (
+          <button
+            onClick={onBackToWelcome}
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors mb-2 font-medium"
+          >
+            <ArrowLeft size={14} /> Back to Welcome Page
+          </button>
+        )}
+
         {/* Brand */}
         <div className="text-center space-y-2">
           <div className="w-14 h-14 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center font-extrabold text-white text-xl shadow-lg">
@@ -76,7 +86,7 @@ export default function DriverLogin({ onLoginSuccess, onSwitchToManager }) {
             disabled={loading}
             className="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors"
           >
-            {loading ? 'Signing In...' : 'Driver Login'} <ArrowRight size={16} />
+            {loading ? 'Signing In...' : 'Continue as Driver'} <ArrowRight size={16} />
           </button>
         </form>
 

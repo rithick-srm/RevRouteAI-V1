@@ -83,10 +83,28 @@ def seed_database():
     )
     db.add_all([cnt1, cnt2, cnt3])
 
-    # 4. Vehicles
-    v1 = Vehicle(vehicle_id="TRK-101", vehicle_class="Heavy Truck", license_plate="TN-01-AB-1234", expected_mileage_km_l=8.0, fuel_type="Diesel")
-    v2 = Vehicle(vehicle_id="TRK-102", vehicle_class="Heavy Truck", license_plate="TN-02-CD-5678", expected_mileage_km_l=7.5, fuel_type="Diesel")
-    v3 = Vehicle(vehicle_id="TRK-103", vehicle_class="Medium Commercial", license_plate="KA-01-EF-9012", expected_mileage_km_l=10.0, fuel_type="Diesel")
+    # 4. Vehicles & Baselines
+    v1 = Vehicle(
+        vehicle_id="TRK-101", vehicle_class="Heavy Truck", license_plate="TN-01-AB-1234",
+        expected_mileage_km_l=4.5, fuel_type="Diesel",
+        expected_fuel_price_per_l=90.0,
+        expected_maint_cost_min=6000.0, expected_maint_cost_max=8000.0,
+        expected_maint_interval_km=10000.0, expected_maint_interval_days=90
+    )
+    v2 = Vehicle(
+        vehicle_id="TRK-102", vehicle_class="Heavy Truck", license_plate="TN-02-CD-5678",
+        expected_mileage_km_l=5.0, fuel_type="Diesel",
+        expected_fuel_price_per_l=90.0,
+        expected_maint_cost_min=6000.0, expected_maint_cost_max=8000.0,
+        expected_maint_interval_km=10000.0, expected_maint_interval_days=90
+    )
+    v3 = Vehicle(
+        vehicle_id="TRK-103", vehicle_class="Medium Commercial", license_plate="KA-01-EF-9012",
+        expected_mileage_km_l=10.0, fuel_type="Diesel",
+        expected_fuel_price_per_l=90.0,
+        expected_maint_cost_min=4000.0, expected_maint_cost_max=6000.0,
+        expected_maint_interval_km=12000.0, expected_maint_interval_days=120
+    )
     db.add_all([v1, v2, v3])
 
     # 5. Maintenance Benchmarks

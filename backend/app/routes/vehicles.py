@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from backend.app.database.session import get_db
 from backend.app.models.domain import Vehicle
-from backend.app.schemas.schemas import VehicleCreate, VehicleResponse
+from backend.app.schemas.schemas import VehicleCreate, VehicleResponse, VehicleBaselineUpdate
 
 router = APIRouter(prefix="/api/vehicles", tags=["Vehicles"])
 
@@ -22,6 +22,21 @@ def create_vehicle(payload: VehicleCreate, db: Session = Depends(get_db)):
 
     vehicle = Vehicle(**payload.dict())
     db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+    return vehicle
+
+@router.put("/{vehicle_id}/baseline", response_model=VehicleResponse)
+def update_vehicle_baseline(vehicle_id: str, payload: VehicleBaselineUpdate, db: Session = Depends(get_db)):
+    vehicle = db.query(Vehicle).filter(Vehicle.vehicle_id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+
+    update_data = payload.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        if value is not None:
+            setattr(vehicle, field, value)
+
     db.commit()
     db.refresh(vehicle)
     return vehicle

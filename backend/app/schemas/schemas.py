@@ -56,6 +56,23 @@ class VehicleCreate(BaseModel):
     license_plate: str
     expected_mileage_km_l: float
     fuel_type: str = "Diesel"
+    expected_fuel_price_per_l: Optional[float] = 90.0
+    expected_fuel_consumption_min_l: Optional[float] = None
+    expected_fuel_consumption_max_l: Optional[float] = None
+    expected_maint_cost_min: Optional[float] = 6000.0
+    expected_maint_cost_max: Optional[float] = 8000.0
+    expected_maint_interval_km: Optional[float] = 10000.0
+    expected_maint_interval_days: Optional[int] = 90
+
+class VehicleBaselineUpdate(BaseModel):
+    expected_mileage_km_l: Optional[float] = None
+    expected_fuel_price_per_l: Optional[float] = None
+    expected_fuel_consumption_min_l: Optional[float] = None
+    expected_fuel_consumption_max_l: Optional[float] = None
+    expected_maint_cost_min: Optional[float] = None
+    expected_maint_cost_max: Optional[float] = None
+    expected_maint_interval_km: Optional[float] = None
+    expected_maint_interval_days: Optional[int] = None
 
 class VehicleResponse(VehicleCreate):
     created_at: Optional[datetime] = None

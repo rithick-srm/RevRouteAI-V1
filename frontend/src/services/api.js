@@ -55,10 +55,14 @@ export const api = {
   verifyInvoice: (id, status = 'VERIFIED') => fetchApi(`/invoices/${id}/verify?status=${status}`, { method: 'PUT' }),
   deleteInvoice: (id) => fetchApi(`/invoices/${id}`, { method: 'DELETE' }),
 
-  // Vehicles
+  // Vehicles & Baselines
   getVehicles: () => fetchApi('/vehicles'),
   createVehicle: (data) => fetchApi('/vehicles', { method: 'POST', body: JSON.stringify(data) }),
+  updateVehicleBaseline: (id, data) => fetchApi(`/vehicles/${id}/baseline`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteVehicle: (id) => fetchApi(`/vehicles/${id}`, { method: 'DELETE' }),
+
+  // AI Fleet Audit Assistant
+  askAssistant: (question) => fetchApi('/ai/ask', { method: 'POST', body: JSON.stringify({ question }) }),
 
   // Maintenance
   getMaintenanceBenchmarks: () => fetchApi('/maintenance/benchmarks'),

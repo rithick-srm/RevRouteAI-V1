@@ -57,8 +57,18 @@ class Vehicle(Base):
     vehicle_id = Column(String(50), primary_key=True, index=True)
     vehicle_class = Column(String(100), nullable=False)
     license_plate = Column(String(50), nullable=False)
-    expected_mileage_km_l = Column(Float, nullable=False)
+    expected_mileage_km_l = Column(Float, nullable=False) # Fuel Baseline Efficiency (km/L)
     fuel_type = Column(String(20), default="Diesel")
+    
+    # Baseline Configuration Fields
+    expected_fuel_price_per_l = Column(Float, default=90.0)
+    expected_fuel_consumption_min_l = Column(Float, nullable=True)
+    expected_fuel_consumption_max_l = Column(Float, nullable=True)
+    expected_maint_cost_min = Column(Float, default=6000.0)
+    expected_maint_cost_max = Column(Float, default=8000.0)
+    expected_maint_interval_km = Column(Float, default=10000.0)
+    expected_maint_interval_days = Column(Integer, default=90)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
     shipments = relationship("Shipment", back_populates="vehicle")

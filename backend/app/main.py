@@ -7,7 +7,7 @@ from backend.app.database.session import Base, engine
 from backend.app.routes import (
     auth, dashboard, customers, contracts, shipments, invoices,
     vehicles, maintenance, fuel, audits, alerts, action_cases, documents,
-    driver_portal
+    driver_portal, assistant
 )
 
 # Create database tables if they do not exist
@@ -16,7 +16,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="RevRoute AI — Logistics Financial & Operational Leakage Audit Platform",
     description="Detect. Analyze. Recover. AI-Assisted Logistics Auditing Platform prototype with Manager and Driver Portals.",
-    version="1.1.0"
+    version="1.2.0"
 )
 
 # CORS Middleware Setup
@@ -48,6 +48,7 @@ app.include_router(alerts.router)
 app.include_router(action_cases.router)
 app.include_router(documents.router)
 app.include_router(driver_portal.router)
+app.include_router(assistant.router)
 
 @app.get("/api/health")
 def health_check():

@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, Users, FileText, Truck, Receipt, 
-  Wrench, Fuel, ShieldAlert, CheckSquare, FolderArchive, Info, ChevronRight, Scale, X
+  Wrench, Fuel, ShieldAlert, CheckSquare, FolderArchive, Info, ChevronRight, Scale, X, Bot, Sparkles
 } from 'lucide-react';
 
 export default function Sidebar({ activePage, setActivePage, isOpen, onClose }) {
@@ -27,6 +27,7 @@ export default function Sidebar({ activePage, setActivePage, isOpen, onClose }) 
     {
       header: 'Audit',
       items: [
+        { id: 'ai-assistant', label: 'AI Fleet Assistant', icon: Bot },
         { id: 'billing-audit', label: 'Billing Audit', icon: Scale },
         { id: 'maintenance-audit', label: 'Maintenance Audit', icon: Wrench },
         { id: 'fuel-audit', label: 'Fuel Audit', icon: Fuel },

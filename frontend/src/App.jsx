@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
+// Welcome & Auth Pages
+import WelcomePage from './pages/WelcomePage';
+import ManagerLogin from './pages/ManagerLogin';
+
 // Management Portal Pages
 import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
@@ -18,6 +22,7 @@ import Alerts from './pages/Alerts';
 import ActionCases from './pages/ActionCases';
 import Documents from './pages/Documents';
 import About from './pages/About';
+import FleetAssistant from './pages/FleetAssistant';
 
 // Driver Portal Components & Pages
 import DriverHeader from './components/driver/DriverHeader';
@@ -26,11 +31,11 @@ import DriverDashboard from './pages/driver/DriverDashboard';
 import DriverFuelEntry from './pages/driver/DriverFuelEntry';
 import DriverRepairEntry from './pages/driver/DriverRepairEntry';
 import DriverHistory from './pages/driver/DriverHistory';
-import { Menu } from 'lucide-react';
+import { Menu, LogOut, Home, Truck } from 'lucide-react';
 
 export default function App() {
-  // Active Portal State: 'manager' | 'driver'
-  const [portal, setPortal] = useState('manager');
+  // Active Portal State: 'welcome' | 'manager-login' | 'manager' | 'driver'
+  const [portal, setPortal] = useState('welcome');
 
   // Management Portal Active Page State
   const [activePage, setActivePage] = useState('dashboard');
@@ -39,16 +44,16 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Driver Portal Active Page State: 'dashboard' | 'fuel' | 'repair' | 'history' | 'login'
-  const [driverPage, setDriverPage] = useState('dashboard');
+  const [driverPage, setDriverPage] = useState('login');
 
-  // Auth User State
-  const [currentUser, setCurrentUser] = useState({
-    id: 1,
-    name: 'Fleet Manager',
-    email: 'manager@revroute.ai',
-    role: 'Fleet Manager',
-    assigned_vehicle_id: null
-  });
+  // Auth User State (null by default on Welcome Page)
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const handleManagerLoginSuccess = (user) => {
+    setCurrentUser(user);
+    setPortal('manager');
+    setActivePage('dashboard');
+  };
 
   const handleDriverLoginSuccess = (user) => {
     setCurrentUser(user);
@@ -58,6 +63,7 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setPortal('welcome');
     setDriverPage('login');
   };
 
@@ -67,9 +73,10 @@ export default function App() {
     contracts: { title: 'Contract Management', subtitle: 'Operations / Customer Contracts' },
     shipments: { title: 'Shipment Management', subtitle: 'Operations / Trip Dispatch & Detention' },
     invoices: { title: 'Invoice Registry', subtitle: 'Operations / Customer Billing Invoices' },
-    vehicles: { title: 'Vehicle Directory', subtitle: 'Fleet / Vehicle Master & Baselines' },
+    vehicles: { title: 'Vehicle Directory & Baselines', subtitle: 'Fleet / Vehicle Master & Audit Baselines' },
     maintenance: { title: 'Fleet Maintenance', subtitle: 'Fleet / Repairs & Benchmarks' },
     fuel: { title: 'Fuel Consumption Logs', subtitle: 'Fleet / Fuel Logs & Tank Levels' },
+    'ai-assistant': { title: 'RevRoute AI Fleet Audit Assistant', subtitle: 'Audit Engine / Database-Grounded Discrepancy & Baseline AI Assistant' },
     'billing-audit': { title: 'Billing Revenue Leakage Audit', subtitle: 'Audit Engine / Module 1 — Billing Discrepancies' },
     'maintenance-audit': { title: 'Maintenance Cost Overrun Audit', subtitle: 'Audit Engine / Module 2 — Operational Repair Overruns' },
     'fuel-audit': { title: 'Fuel Consumption & Cost Variance Audit', subtitle: 'Audit Engine / Module 3 — Fuel Baselines & Variances' },
@@ -99,6 +106,8 @@ export default function App() {
         return <Maintenance />;
       case 'fuel':
         return <FuelLogs />;
+      case 'ai-assistant':
+        return <FleetAssistant />;
       case 'billing-audit':
         return <BillingAudit setActivePage={setActivePage} />;
       case 'maintenance-audit':
@@ -123,7 +132,8 @@ export default function App() {
       return (
         <DriverLogin
           onLoginSuccess={handleDriverLoginSuccess}
-          onSwitchToManager={() => setPortal('manager')}
+          onSwitchToManager={() => setPortal('manager-login')}
+          onBackToWelcome={() => setPortal('welcome')}
         />
       );
     }
@@ -142,13 +152,52 @@ export default function App() {
     }
   };
 
-  // Render Driver Portal View
+  // Render 1. WELCOME PAGE (Root Landing View)
+  if (portal === 'welcome') {
+    return (
+      <WelcomePage
+        onSelectManager={() => {
+          if (currentUser && currentUser.role === 'Fleet Manager') {
+            setPortal('manager');
+          } else {
+            setPortal('manager-login');
+          }
+        }}
+        onSelectDriver={() => {
+          if (currentUser && currentUser.role === 'Driver') {
+            setPortal('driver');
+            setDriverPage('dashboard');
+          } else {
+            setPortal('driver');
+            setDriverPage('login');
+          }
+        }}
+      />
+    );
+  }
+
+  // Render 2. MANAGER LOGIN VIEW
+  if (portal === 'manager-login') {
+    return (
+      <ManagerLogin
+        onLoginSuccess={handleManagerLoginSuccess}
+        onBackToWelcome={() => setPortal('welcome')}
+        onSwitchToDriver={() => {
+          setPortal('driver');
+          setDriverPage('login');
+        }}
+      />
+    );
+  }
+
+  // Render 3. DRIVER PORTAL VIEW
   if (portal === 'driver') {
     if (!currentUser || driverPage === 'login') {
       return (
         <DriverLogin
           onLoginSuccess={handleDriverLoginSuccess}
-          onSwitchToManager={() => setPortal('manager')}
+          onSwitchToManager={() => setPortal('manager-login')}
+          onBackToWelcome={() => setPortal('welcome')}
         />
       );
     }
@@ -160,7 +209,7 @@ export default function App() {
           driverPage={driverPage}
           setDriverPage={setDriverPage}
           onLogout={handleLogout}
-          onSwitchPortal={() => setPortal('manager')}
+          onSwitchPortal={() => setPortal('welcome')}
         />
         <main className="bg-[#F8FAFC]">
           {renderDriverContent()}
@@ -169,7 +218,20 @@ export default function App() {
     );
   }
 
-  // Render Existing Management Portal View
+  // Render 4. MANAGEMENT PORTAL VIEW
+  if (!currentUser) {
+    return (
+      <ManagerLogin
+        onLoginSuccess={handleManagerLoginSuccess}
+        onBackToWelcome={() => setPortal('welcome')}
+        onSwitchToDriver={() => {
+          setPortal('driver');
+          setDriverPage('login');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] max-w-full">
       <Sidebar 
@@ -197,30 +259,42 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Return to Welcome Page */}
+            <button
+              onClick={() => setPortal('welcome')}
+              className="px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] sm:text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shrink-0 border border-slate-200"
+              title="Return to Welcome Page"
+            >
+              <Home size={14} />
+              <span className="hidden sm:inline">Welcome Page</span>
+            </button>
+
+            {/* Switch to Driver Portal */}
             <button
               onClick={() => {
                 setPortal('driver');
-                if (!currentUser || currentUser.role !== 'Driver') {
-                  setCurrentUser({
-                    id: 2,
-                    name: 'Ramesh Kumar',
-                    email: 'driver1@revroute.ai',
-                    role: 'Driver',
-                    assigned_vehicle_id: 'TRK-101'
-                  });
-                }
-                setDriverPage('dashboard');
+                setDriverPage('login');
               }}
               className="px-2.5 sm:px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[11px] sm:text-xs font-semibold rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 shrink-0"
             >
+              <Truck size={14} />
               <span>Driver Portal</span>
+            </button>
+
+            {/* Sign Out Button */}
+            <button
+              onClick={handleLogout}
+              className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg border border-rose-200 transition-colors shrink-0"
+              title="Sign Out"
+            >
+              <LogOut size={16} />
             </button>
 
             <div className="flex items-center gap-2 border-l border-slate-200 pl-2 sm:pl-3">
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
                 FM
               </div>
-              <span className="text-xs sm:text-sm font-medium text-slate-700 hidden sm:inline">Fleet Manager</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-700 hidden sm:inline">{currentUser.name || 'Fleet Manager'}</span>
             </div>
           </div>
         </div>
