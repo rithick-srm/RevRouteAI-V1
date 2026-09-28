@@ -11,6 +11,10 @@ router = APIRouter(prefix="/api/vehicles", tags=["Vehicles"])
 def get_vehicles(db: Session = Depends(get_db)):
     return db.query(Vehicle).all()
 
+@router.get("/map", response_model=List[VehicleResponse])
+def get_vehicles_map(db: Session = Depends(get_db)):
+    return db.query(Vehicle).all()
+
 @router.post("", response_model=VehicleResponse)
 def create_vehicle(payload: VehicleCreate, db: Session = Depends(get_db)):
     if payload.expected_mileage_km_l <= 0:

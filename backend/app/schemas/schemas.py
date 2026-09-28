@@ -63,6 +63,14 @@ class VehicleCreate(BaseModel):
     expected_maint_cost_max: Optional[float] = 8000.0
     expected_maint_interval_km: Optional[float] = 10000.0
     expected_maint_interval_days: Optional[int] = 90
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    location_name: Optional[str] = None
+    current_driver_name: Optional[str] = None
+    current_route: Optional[str] = None
+    speed_kmh: Optional[float] = 0.0
+    status: Optional[str] = "Idle"
+    fuel_level_pct: Optional[float] = 100.0
 
 class VehicleBaselineUpdate(BaseModel):
     expected_mileage_km_l: Optional[float] = None
@@ -75,6 +83,7 @@ class VehicleBaselineUpdate(BaseModel):
     expected_maint_interval_days: Optional[int] = None
 
 class VehicleResponse(VehicleCreate):
+    last_update: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
     class Config:
@@ -265,3 +274,36 @@ class ActionCaseResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TollRecordCreate(BaseModel):
+    toll_id: Optional[str] = None
+    vehicle_id: str
+    shipment_id: Optional[str] = None
+    route: str
+    toll_gate: str
+    date: date
+    expected_amount: float
+    actual_amount: float
+    notes: Optional[str] = None
+
+class TollStatusUpdate(BaseModel):
+    status: str
+
+class TollRecordResponse(BaseModel):
+    id: int
+    toll_id: str
+    vehicle_id: str
+    shipment_id: Optional[str] = None
+    route: str
+    toll_gate: str
+    date: date
+    expected_amount: float
+    actual_amount: float
+    variance: float
+    status: str
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+

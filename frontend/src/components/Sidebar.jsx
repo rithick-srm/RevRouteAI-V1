@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  LayoutDashboard, Users, FileText, Truck, Receipt, 
+  LayoutDashboard, Users, FileText, Truck, Receipt, MapPin, CreditCard,
   Wrench, Fuel, ShieldAlert, CheckSquare, FolderArchive, Info, ChevronRight, Scale, X, Bot, Sparkles
 } from 'lucide-react';
 
@@ -22,6 +22,8 @@ export default function Sidebar({ activePage, setActivePage, isOpen, onClose }) 
         { id: 'vehicles', label: 'Vehicles', icon: Truck },
         { id: 'maintenance', label: 'Maintenance', icon: Wrench },
         { id: 'fuel', label: 'Fuel Logs', icon: Fuel },
+        { id: 'fleet-map', label: 'Fleet Map', icon: MapPin },
+        { id: 'toll-costs', label: 'Toll Costs', icon: CreditCard },
       ]
     },
     {
@@ -31,6 +33,7 @@ export default function Sidebar({ activePage, setActivePage, isOpen, onClose }) 
         { id: 'billing-audit', label: 'Billing Audit', icon: Scale },
         { id: 'maintenance-audit', label: 'Maintenance Audit', icon: Wrench },
         { id: 'fuel-audit', label: 'Fuel Audit', icon: Fuel },
+        { id: 'toll-audit', label: 'Toll Audit', icon: Receipt },
         { id: 'alerts', label: 'Alerts', icon: ShieldAlert },
       ]
     },

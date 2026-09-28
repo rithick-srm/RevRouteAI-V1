@@ -2,7 +2,7 @@ import re
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from backend.app.models.domain import (
-    Vehicle, FuelLog, MaintenanceLog, Shipment, Invoice, AuditResult, LeakageAlert, User
+    Vehicle, FuelLog, MaintenanceLog, Shipment, Invoice, AuditResult, LeakageAlert, User, TollRecord
 )
 
 def process_assistant_question(question: str, db: Session) -> Dict[str, Any]:
@@ -11,7 +11,7 @@ def process_assistant_question(question: str, db: Session) -> Dict[str, Any]:
     Architecture:
     1. Parse Manager question & identify target vehicle / query intent.
     2. Retrieve authoritative RevRoute database records.
-    3. Perform deterministic Python numerical calculations (efficiency, cost diff, baseline comparisons).
+    3. Perform deterministic Python numerical calculations (efficiency, cost diff, baseline comparisons, toll variances, telematics location).
     4. Format structured analysis & neutral non-accusatory explanation.
     """
     clean_q = question.strip().lower()
@@ -25,6 +25,8 @@ def process_assistant_question(question: str, db: Session) -> Dict[str, Any]:
     is_fuel_query = any(w in clean_q for w in ["fuel", "gas", "liters", "petrol", "diesel", "mileage", "efficiency"])
     is_maint_query = any(w in clean_q for w in ["maintenance", "repair", "service", "breakdown", "parts", "workshop", "fix"])
     is_audit_query = any(w in clean_q for w in ["audit", "issue", "alert", "discrepancy", "review", "attention", "leakage"])
+    is_toll_query = any(w in clean_q for w in ["toll", "tolls", "fastag", "gate", "toll cost", "toll spend", "toll variance", "toll review"])
+    is_location_query = any(w in clean_q for w in ["where is", "where was", "location", "last recorded", "recorded location", "moving", "idle", "position", "gps", "tracking"])
 
     # 1. Invalid / Unknown vehicle check if explicit ID was given but not in DB
     if vehicle_id:
@@ -33,6 +35,14 @@ def process_assistant_question(question: str, db: Session) -> Dict[str, Any]:
             return build_no_data_response(question, f"Vehicle {vehicle_id} is not registered in the RevRoute database.")
     else:
         veh = None
+
+    # Handle Toll Queries
+    if is_toll_query:
+        return handle_toll_query(question, vehicle_id, clean_q, db)
+
+    # Handle Location Queries
+    if is_location_query:
+        return handle_location_query(question, vehicle_id, clean_q, db)
 
     # Handle Fleet-wide Queries (no single vehicle specified)
     if not vehicle_id:
@@ -58,7 +68,6 @@ def process_assistant_question(question: str, db: Session) -> Dict[str, Any]:
     elif "why" in clean_q and is_fuel_query:
         return handle_fuel_high_analysis(question, vehicle_id, db)
     elif is_fuel_query and ("spend" in clean_q or "cost" in clean_q or "how much" in clean_q):
-        # NOTE: Conditional baseline is OFF here because question asks for expenditure, not baseline comparison!
         return handle_fuel_expenditure(question, vehicle_id, db)
     elif is_maint_query:
         return handle_maint_history(question, vehicle_id, db)
@@ -613,9 +622,208 @@ def handle_fleet_audit_summary(question: str, db: Session) -> Dict[str, Any]:
 
 def default_suggested_questions() -> List[str]:
     return [
-        "Analyze TRK-101 fuel performance",
-        "Compare TRK-101 with fuel baseline",
-        "Check maintenance baseline for TRK-101",
-        "Show current audit issues for TRK-101",
-        "Summarize recent fleet issues"
+        "What was TRK-101's toll expenditure this month?",
+        "Which toll records need review?",
+        "What is the last recorded location of TRK-101?",
+        "Which vehicles are currently recorded as moving?",
+        "Compare TRK-101's fuel performance with its baseline"
     ]
+
+
+def handle_toll_query(question: str, vehicle_id: Optional[str], clean_q: str, db: Session) -> Dict[str, Any]:
+    if vehicle_id:
+        tolls = db.query(TollRecord).filter(TollRecord.vehicle_id == vehicle_id).all()
+        if not tolls:
+            return build_no_data_response(question, f"No toll records found for vehicle {vehicle_id}.")
+
+        total_actual = sum(t.actual_amount for t in tolls)
+        total_expected = sum(t.expected_amount for t in tolls)
+        total_variance = sum(t.variance for t in tolls)
+        flagged_count = sum(1 for t in tolls if t.status in ["Review", "Flagged"])
+
+        lines = [
+            f"Toll Expenditure Analysis for {vehicle_id}:",
+            f"• Total Recorded Toll Spend: ₹{total_actual:,.2f}",
+            f"• Total Expected Toll Baseline: ₹{total_expected:,.2f}",
+            f"• Toll Cost Variance: +₹{total_variance:,.2f}" if total_variance > 0 else f"• Toll Cost Variance: ₹{total_variance:,.2f}",
+            f"• Toll Transactions Recorded: {len(tolls)}",
+            f"• Transactions Requiring Review: {flagged_count}"
+        ]
+
+        if total_variance > 0:
+            lines.append("\nAudit Findings:")
+            lines.append(f"Discrepancy detected: Actual toll expenses for {vehicle_id} exceed route baseline expectations by ₹{total_variance:,.2f}. Manual verification is recommended.")
+        else:
+            lines.append("\nAudit Findings:")
+            lines.append(f"Toll expenses for {vehicle_id} match expected route baselines.")
+
+        return {
+            "question": question,
+            "data_found": True,
+            "intent": "toll_vehicle",
+            "title": f"Toll Audit Analysis — {vehicle_id}",
+            "formatted_answer": "\n".join(lines),
+            "structured_data": {
+                "vehicle_id": vehicle_id,
+                "total_actual": total_actual,
+                "total_expected": total_expected,
+                "total_variance": total_variance,
+                "flagged_count": flagged_count
+            },
+            "suggested_questions": [
+                "Which toll records need review?",
+                "How much did we spend on tolls this month?",
+                "Which routes have the highest toll expenditure?",
+                f"What is the last recorded location of {vehicle_id}?"
+            ]
+        }
+    else:
+        tolls = db.query(TollRecord).all()
+        if not tolls:
+            return build_no_data_response(question, "No toll records found in the RevRoute database.")
+
+        total_actual = sum(t.actual_amount for t in tolls)
+        total_expected = sum(t.expected_amount for t in tolls)
+        total_variance = sum(t.variance for t in tolls)
+        flagged_count = sum(1 for t in tolls if t.status in ["Review", "Flagged"])
+
+        # Group by route if route questions
+        route_totals = {}
+        for t in tolls:
+            route_totals[t.route] = route_totals.get(t.route, 0.0) + t.actual_amount
+
+        sorted_routes = sorted(route_totals.items(), key=lambda x: x[1], reverse=True)
+
+        lines = [
+            "Fleet-Wide Toll Cost & Audit Summary:",
+            f"• Total Fleet Toll Spend: ₹{total_actual:,.2f}",
+            f"• Expected Toll Baseline: ₹{total_expected:,.2f}",
+            f"• Total Fleet Variance: +₹{total_variance:,.2f}" if total_variance > 0 else f"• Total Fleet Variance: ₹{total_variance:,.2f}",
+            f"• Total Toll Records: {len(tolls)}",
+            f"• Items Requiring Review / Flagged: {flagged_count}"
+        ]
+
+        if sorted_routes:
+            lines.append("\nTop Routes by Toll Expenditure:")
+            for route_name, amount in sorted_routes[:3]:
+                lines.append(f"• {route_name}: ₹{amount:,.2f}")
+
+        if flagged_count > 0:
+            lines.append("\nAudit Findings:")
+            lines.append(f"Variances detected across {flagged_count} toll transactions with total financial variance of ₹{total_variance:,.2f}. Manual verification is recommended.")
+
+        return {
+            "question": question,
+            "data_found": True,
+            "intent": "toll_fleet",
+            "title": "Fleet Toll Cost & Audit Summary",
+            "formatted_answer": "\n".join(lines),
+            "structured_data": {
+                "total_actual": total_actual,
+                "total_expected": total_expected,
+                "total_variance": total_variance,
+                "flagged_count": flagged_count
+            },
+            "suggested_questions": [
+                "What was TRK-101's toll expenditure this month?",
+                "Which vehicles have toll variances?",
+                "Which toll records need review?",
+                "Which routes have the highest toll expenditure?"
+            ]
+        }
+
+
+def handle_location_query(question: str, vehicle_id: Optional[str], clean_q: str, db: Session) -> Dict[str, Any]:
+    if vehicle_id:
+        veh = db.query(Vehicle).filter(Vehicle.vehicle_id == vehicle_id).first()
+        if not veh:
+            return build_no_data_response(question, f"Vehicle {vehicle_id} not found.")
+
+        loc = veh.location_name or "Not available"
+        driver = veh.current_driver_name or "Assigned Driver"
+        route = veh.current_route or "Not assigned"
+        speed = f"{veh.speed_kmh} km/h" if veh.speed_kmh is not None else "0 km/h"
+        status = veh.status or "Idle"
+        fuel_pct = f"{veh.fuel_level_pct}%" if veh.fuel_level_pct is not None else "N/A"
+        last_up = veh.last_update.strftime("%Y-%m-%d %H:%M UTC") if veh.last_update else "Recently"
+
+        lines = [
+            f"Telematics Location Report for {vehicle_id}:",
+            f"• Last Recorded Location: {loc}",
+            f"• Vehicle Operational Status: {status}",
+            f"• Current Recorded Speed: {speed}",
+            f"• Assigned Driver: {driver}",
+            f"• Current Route: {route}",
+            f"• Fuel Level: {fuel_pct}",
+            f"• Last Update Timestamp: {last_up}",
+            "\nNote: Location data reflects the latest recorded telematics entry stored in the RevRoute database."
+        ]
+
+        return {
+            "question": question,
+            "data_found": True,
+            "intent": "location_vehicle",
+            "title": f"Vehicle Location Report — {vehicle_id}",
+            "formatted_answer": "\n".join(lines),
+            "structured_data": {
+                "vehicle_id": vehicle_id,
+                "location_name": loc,
+                "status": status,
+                "speed_kmh": veh.speed_kmh,
+                "last_update": last_up
+            },
+            "suggested_questions": [
+                "Which vehicles are currently recorded as moving?",
+                "Show me the vehicles currently marked for maintenance.",
+                f"What was {vehicle_id}'s toll expenditure this month?",
+                f"Compare {vehicle_id}'s fuel performance with its baseline"
+            ]
+        }
+    else:
+        vehicles = db.query(Vehicle).all()
+        if not vehicles:
+            return build_no_data_response(question, "No vehicle location records available in database.")
+
+        if "moving" in clean_q:
+            filtered = [v for v in vehicles if v.status == "Moving"]
+            target_status = "Moving"
+        elif "maintenance" in clean_q:
+            filtered = [v for v in vehicles if v.status == "Maintenance"]
+            target_status = "Maintenance"
+        elif "idle" in clean_q:
+            filtered = [v for v in vehicles if v.status == "Idle"]
+            target_status = "Idle"
+        else:
+            filtered = vehicles
+            target_status = "All Recorded"
+
+        lines = [
+            f"Fleet Location & Telematics Master ({target_status}):",
+        ]
+
+        for v in filtered:
+            loc = v.location_name or "Unknown location"
+            speed = f"{v.speed_kmh} km/h" if v.speed_kmh else "0 km/h"
+            driver = v.current_driver_name or "Unassigned"
+            lines.append(f"• {v.vehicle_id} ({v.license_plate}): {loc} — Status: {v.status}, Speed: {speed}, Driver: {driver}")
+
+        lines.append("\nNote: Telematics data represents stored last-known locations in the RevRoute database.")
+
+        return {
+            "question": question,
+            "data_found": True,
+            "intent": "location_fleet",
+            "title": f"Fleet Telematics Summary ({target_status})",
+            "formatted_answer": "\n".join(lines),
+            "structured_data": {
+                "total_vehicles": len(vehicles),
+                "filtered_count": len(filtered)
+            },
+            "suggested_questions": [
+                "What is the last recorded location of TRK-101?",
+                "Which vehicles are currently recorded as moving?",
+                "Show me the vehicles currently marked for maintenance.",
+                "How much did we spend on tolls this month?"
+            ]
+        }
+

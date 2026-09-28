@@ -18,6 +18,9 @@ import FuelLogs from './pages/FuelLogs';
 import BillingAudit from './pages/BillingAudit';
 import MaintenanceAudit from './pages/MaintenanceAudit';
 import FuelAudit from './pages/FuelAudit';
+import TollAudit from './pages/TollAudit';
+import TollCosts from './pages/TollCosts';
+import FleetMap from './pages/FleetMap';
 import Alerts from './pages/Alerts';
 import ActionCases from './pages/ActionCases';
 import Documents from './pages/Documents';
@@ -76,10 +79,13 @@ export default function App() {
     vehicles: { title: 'Vehicle Directory & Baselines', subtitle: 'Fleet / Vehicle Master & Audit Baselines' },
     maintenance: { title: 'Fleet Maintenance', subtitle: 'Fleet / Repairs & Benchmarks' },
     fuel: { title: 'Fuel Consumption Logs', subtitle: 'Fleet / Fuel Logs & Tank Levels' },
+    'fleet-map': { title: 'Fleet Tracking Map', subtitle: 'Fleet / Current Recorded Telematics Locations' },
+    'toll-costs': { title: 'Toll Cost & Audit', subtitle: 'Fleet / Route Toll Expenses & Discrepancies' },
     'ai-assistant': { title: 'RevRoute AI Fleet Audit Assistant', subtitle: 'Audit Engine / Database-Grounded Discrepancy & Baseline AI Assistant' },
     'billing-audit': { title: 'Billing Revenue Leakage Audit', subtitle: 'Audit Engine / Module 1 — Billing Discrepancies' },
     'maintenance-audit': { title: 'Maintenance Cost Overrun Audit', subtitle: 'Audit Engine / Module 2 — Operational Repair Overruns' },
     'fuel-audit': { title: 'Fuel Consumption & Cost Variance Audit', subtitle: 'Audit Engine / Module 3 — Fuel Baselines & Variances' },
+    'toll-audit': { title: 'Toll Revenue & Expense Leakage Audit', subtitle: 'Audit Engine / Module 4 — Route Toll Discrepancy & Overcharge Analysis' },
     alerts: { title: 'Leakage & Operational Variance Alerts', subtitle: 'Audit Engine / Centralized Alert Queue' },
     'action-cases': { title: 'Recovery & Corrective Action Cases', subtitle: 'Human Action & Financial Recovery Tracking' },
     documents: { title: 'AI Document Processing Hub', subtitle: 'Document AI / OCR Field Extractor' },
@@ -106,6 +112,10 @@ export default function App() {
         return <Maintenance />;
       case 'fuel':
         return <FuelLogs />;
+      case 'fleet-map':
+        return <FleetMap setActivePage={setActivePage} />;
+      case 'toll-costs':
+        return <TollCosts />;
       case 'ai-assistant':
         return <FleetAssistant />;
       case 'billing-audit':
@@ -114,6 +124,8 @@ export default function App() {
         return <MaintenanceAudit setActivePage={setActivePage} />;
       case 'fuel-audit':
         return <FuelAudit setActivePage={setActivePage} />;
+      case 'toll-audit':
+        return <TollAudit setActivePage={setActivePage} />;
       case 'alerts':
         return <Alerts setActivePage={setActivePage} />;
       case 'action-cases':

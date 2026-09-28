@@ -3,7 +3,7 @@ from datetime import datetime, date
 from backend.app.database.session import Base, engine, SessionLocal
 from backend.app.models.domain import (
     User, Customer, Contract, Vehicle, MaintenanceBenchmark, Shipment,
-    Invoice, MaintenanceLog, FuelLog, AuditResult, LeakageAlert, RecoveryActionCase
+    Invoice, MaintenanceLog, FuelLog, AuditResult, LeakageAlert, RecoveryActionCase, TollRecord
 )
 
 def seed_database():
@@ -83,27 +83,36 @@ def seed_database():
     )
     db.add_all([cnt1, cnt2, cnt3])
 
-    # 4. Vehicles & Baselines
+    # 4. Vehicles, Telematics Locations & Baselines
     v1 = Vehicle(
         vehicle_id="TRK-101", vehicle_class="Heavy Truck", license_plate="TN-01-AB-1234",
         expected_mileage_km_l=4.5, fuel_type="Diesel",
         expected_fuel_price_per_l=90.0,
         expected_maint_cost_min=6000.0, expected_maint_cost_max=8000.0,
-        expected_maint_interval_km=10000.0, expected_maint_interval_days=90
+        expected_maint_interval_km=10000.0, expected_maint_interval_days=90,
+        latitude=12.9716, longitude=77.5946, location_name="Bengaluru Highway Hub",
+        current_driver_name="Ramesh Kumar", current_route="Chennai → Bengaluru",
+        speed_kmh=52.0, status="Moving", fuel_level_pct=68.0, last_update=datetime.now()
     )
     v2 = Vehicle(
         vehicle_id="TRK-102", vehicle_class="Heavy Truck", license_plate="TN-02-CD-5678",
         expected_mileage_km_l=5.0, fuel_type="Diesel",
         expected_fuel_price_per_l=90.0,
         expected_maint_cost_min=6000.0, expected_maint_cost_max=8000.0,
-        expected_maint_interval_km=10000.0, expected_maint_interval_days=90
+        expected_maint_interval_km=10000.0, expected_maint_interval_days=90,
+        latitude=17.3850, longitude=78.4867, location_name="Hyderabad Logistics Hub",
+        current_driver_name="Suresh Patel", current_route="Coimbatore → Hyderabad",
+        speed_kmh=0.0, status="Idle", fuel_level_pct=82.0, last_update=datetime.now()
     )
     v3 = Vehicle(
         vehicle_id="TRK-103", vehicle_class="Medium Commercial", license_plate="KA-01-EF-9012",
         expected_mileage_km_l=10.0, fuel_type="Diesel",
         expected_fuel_price_per_l=90.0,
         expected_maint_cost_min=4000.0, expected_maint_cost_max=6000.0,
-        expected_maint_interval_km=12000.0, expected_maint_interval_days=120
+        expected_maint_interval_km=12000.0, expected_maint_interval_days=120,
+        latitude=9.9252, longitude=78.1198, location_name="Madurai Service Depot",
+        current_driver_name="Anand Raj", current_route="Chennai → Madurai",
+        speed_kmh=0.0, status="Maintenance", fuel_level_pct=45.0, last_update=datetime.now()
     )
     db.add_all([v1, v2, v3])
 
@@ -211,6 +220,39 @@ def seed_database():
         review_notes="Contacted service center regarding parts markup variance.", status="IN_PROGRESS"
     )
     db.add(cas1)
+
+    # 13. Toll Records (Expected vs Actual & Discrepancies)
+    t1 = TollRecord(
+        toll_id="TOL-201", vehicle_id="TRK-101", shipment_id="SHP-1001",
+        route="Chennai → Bengaluru", toll_gate="Krishnagiri Plaza",
+        date=date(2024, 9, 10), expected_amount=1400.0, actual_amount=1450.0,
+        variance=50.0, status="Review", notes="Unscheduled axle surcharge applied at gate"
+    )
+    t2 = TollRecord(
+        toll_id="TOL-202", vehicle_id="TRK-102", shipment_id="SHP-1002",
+        route="Coimbatore → Hyderabad", toll_gate="Kurnool Plaza",
+        date=date(2024, 9, 12), expected_amount=1800.0, actual_amount=1800.0,
+        variance=0.0, status="Verified", notes="FASTag auto-deduction matched route baseline"
+    )
+    t3 = TollRecord(
+        toll_id="TOL-203", vehicle_id="TRK-101", shipment_id="SHP-1003",
+        route="Chennai → Madurai", toll_gate="Tindivanam Toll Plaza",
+        date=date(2024, 9, 14), expected_amount=650.0, actual_amount=800.0,
+        variance=150.0, status="Flagged", notes="Double deduction recorded within 10 minutes"
+    )
+    t4 = TollRecord(
+        toll_id="TOL-204", vehicle_id="TRK-103", shipment_id=None,
+        route="Chennai → Salem", toll_gate="Attur Plaza",
+        date=date(2024, 9, 15), expected_amount=900.0, actual_amount=900.0,
+        variance=0.0, status="Verified", notes="FASTag scan verified"
+    )
+    t5 = TollRecord(
+        toll_id="TOL-205", vehicle_id="TRK-102", shipment_id=None,
+        route="Bengaluru → Hyderabad", toll_gate="Anantapur Plaza",
+        date=date(2024, 9, 16), expected_amount=1200.0, actual_amount=1320.0,
+        variance=120.0, status="Review", notes="Peak hour congestion tariff variance"
+    )
+    db.add_all([t1, t2, t3, t4, t5])
 
     db.commit()
     db.close()

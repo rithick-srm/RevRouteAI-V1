@@ -57,9 +57,25 @@ export const api = {
 
   // Vehicles & Baselines
   getVehicles: () => fetchApi('/vehicles'),
+  getVehicleMapData: () => fetchApi('/vehicles/map'),
   createVehicle: (data) => fetchApi('/vehicles', { method: 'POST', body: JSON.stringify(data) }),
   updateVehicleBaseline: (id, data) => fetchApi(`/vehicles/${id}/baseline`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteVehicle: (id) => fetchApi(`/vehicles/${id}`, { method: 'DELETE' }),
+
+  // Toll Costs & Audit
+  getTollRecords: (vehicleId, route, status) => {
+    const params = new URLSearchParams();
+    if (vehicleId) params.append('vehicle_id', vehicleId);
+    if (route) params.append('route', route);
+    if (status) params.append('status', status);
+    const query = params.toString();
+    return fetchApi(`/tolls${query ? '?' + query : ''}`);
+  },
+  getTollSummary: () => fetchApi('/tolls/summary'),
+  getTollAudit: () => fetchApi('/tolls/audit'),
+  createTollRecord: (data) => fetchApi('/tolls', { method: 'POST', body: JSON.stringify(data) }),
+  updateTollStatus: (id, status) => fetchApi(`/tolls/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  deleteTollRecord: (id) => fetchApi(`/tolls/${id}`, { method: 'DELETE' }),
 
   // AI Fleet Audit Assistant
   askAssistant: (question) => fetchApi('/ai/ask', { method: 'POST', body: JSON.stringify({ question }) }),

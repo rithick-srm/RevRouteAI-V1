@@ -69,12 +69,44 @@ class Vehicle(Base):
     expected_maint_interval_km = Column(Float, default=10000.0)
     expected_maint_interval_days = Column(Integer, default=90)
     
+    # Fleet Map / Location Telematics Fields
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    location_name = Column(String(255), nullable=True)
+    current_driver_name = Column(String(255), nullable=True)
+    current_route = Column(String(255), nullable=True)
+    speed_kmh = Column(Float, default=0.0)
+    status = Column(String(50), default="Idle") # "Moving", "Idle", "Maintenance", "Offline"
+    fuel_level_pct = Column(Float, default=100.0)
+    last_update = Column(DateTime, default=datetime.utcnow)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     shipments = relationship("Shipment", back_populates="vehicle")
     maintenance_logs = relationship("MaintenanceLog", back_populates="vehicle")
     fuel_logs = relationship("FuelLog", back_populates="vehicle")
     assigned_drivers = relationship("User", back_populates="assigned_vehicle")
+    toll_records = relationship("TollRecord", back_populates="vehicle")
+
+class TollRecord(Base):
+    __tablename__ = "toll_records"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    toll_id = Column(String(50), unique=True, index=True, nullable=False)
+    vehicle_id = Column(String(50), ForeignKey("vehicles.vehicle_id"), nullable=False)
+    shipment_id = Column(String(50), ForeignKey("shipments.shipment_id"), nullable=True)
+    route = Column(String(255), nullable=False)
+    toll_gate = Column(String(255), nullable=False)
+    date = Column(Date, nullable=False)
+    expected_amount = Column(Float, nullable=False)
+    actual_amount = Column(Float, nullable=False)
+    variance = Column(Float, default=0.0) # actual_amount - expected_amount
+    status = Column(String(30), default="Pending") # "Verified", "Pending", "Flagged", "Review"
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    vehicle = relationship("Vehicle", back_populates="toll_records")
+    shipment = relationship("Shipment")
 
 class MaintenanceBenchmark(Base):
     __tablename__ = "maintenance_benchmarks"
