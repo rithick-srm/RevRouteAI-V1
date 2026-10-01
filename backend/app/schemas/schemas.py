@@ -143,7 +143,7 @@ class InvoiceResponse(InvoiceCreate):
 
 class MaintenanceLogCreate(BaseModel):
     repair_id: Optional[str] = None
-    vehicle_id: str
+    vehicle_id: Optional[str] = None
     driver_id: Optional[int] = None
     service_center: str
     service_date: date
@@ -157,6 +157,7 @@ class MaintenanceLogCreate(BaseModel):
     invoice_number: Optional[str] = None
     receipt_url: Optional[str] = None
     notes: Optional[str] = None
+    is_ocr_confirmed: Optional[bool] = False
 
 class MaintenanceLogResponse(BaseModel):
     repair_id: str
@@ -174,6 +175,10 @@ class MaintenanceLogResponse(BaseModel):
     invoice_number: Optional[str] = None
     receipt_url: Optional[str] = None
     notes: Optional[str] = None
+    ocr_status: Optional[str] = "NONE"
+    manager_review_status: Optional[str] = "PENDING_REVIEW"
+    ocr_raw_text: Optional[str] = None
+    ocr_extracted_json: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:
@@ -181,7 +186,7 @@ class MaintenanceLogResponse(BaseModel):
 
 class FuelLogCreate(BaseModel):
     fuel_log_id: Optional[str] = None
-    vehicle_id: str
+    vehicle_id: Optional[str] = None
     driver_id: Optional[int] = None
     shipment_id: Optional[str] = None
     fuel_date: date
@@ -196,6 +201,7 @@ class FuelLogCreate(BaseModel):
     gps_longitude: Optional[float] = None
     receipt_url: Optional[str] = None
     notes: Optional[str] = None
+    is_ocr_confirmed: Optional[bool] = False
 
 class FuelLogResponse(BaseModel):
     fuel_log_id: str
@@ -214,6 +220,10 @@ class FuelLogResponse(BaseModel):
     gps_longitude: Optional[float] = None
     receipt_url: Optional[str] = None
     notes: Optional[str] = None
+    ocr_status: Optional[str] = "NONE"
+    manager_review_status: Optional[str] = "PENDING_REVIEW"
+    ocr_raw_text: Optional[str] = None
+    ocr_extracted_json: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:

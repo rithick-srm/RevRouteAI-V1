@@ -1,8 +1,8 @@
 import os
 import shutil
 import uuid
-from fastapi import APIRouter, File, UploadFile, HTTPException, Form
-from typing import Dict, Any
+from fastapi import APIRouter, File, UploadFile, HTTPException, Form, Header
+from typing import Dict, Any, Optional
 from backend.app.services.document_processor import process_document
 
 router = APIRouter(prefix="/api/documents", tags=["Document Processing"])
@@ -17,7 +17,8 @@ os.makedirs(os.path.join(UPLOAD_DIR, "fuel"), exist_ok=True)
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    doc_type: str = Form("general") # contract, invoice, maintenance, fuel
+    doc_type: str = Form("general"), # contract, invoice, maintenance, fuel
+    x_driver_id: Optional[int] = Header(None, alias="X-Driver-ID")
 ):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file selected")
@@ -31,7 +32,9 @@ async def upload_document(
     target_dir = os.path.join(UPLOAD_DIR, subfolder)
     os.makedirs(target_dir, exist_ok=True)
 
-    filename = f"{uuid.uuid4().hex[:8]}_{file.filename}"
+    # Embed development-only driver ownership prefix if present
+    driver_prefix = f"drv{x_driver_id}_" if x_driver_id is not None else ""
+    filename = f"{driver_prefix}{uuid.uuid4().hex[:8]}_{file.filename}"
     file_path = os.path.join(target_dir, filename)
 
     with open(file_path, "wb") as buffer:

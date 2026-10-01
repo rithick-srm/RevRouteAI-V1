@@ -176,6 +176,10 @@ class MaintenanceLog(Base):
     invoice_number = Column(String(100), nullable=True)
     receipt_url = Column(String(500), nullable=True)
     notes = Column(Text, nullable=True)
+    ocr_status = Column(String(50), default="DRIVER_CONFIRMED")
+    manager_review_status = Column(String(50), default="PENDING_REVIEW")
+    ocr_raw_text = Column(Text, nullable=True)
+    ocr_extracted_json = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     vehicle = relationship("Vehicle", back_populates="maintenance_logs")
@@ -200,11 +204,28 @@ class FuelLog(Base):
     gps_longitude = Column(Float, nullable=True)
     receipt_url = Column(String(500), nullable=True)
     notes = Column(Text, nullable=True)
+    ocr_status = Column(String(50), default="DRIVER_CONFIRMED")
+    manager_review_status = Column(String(50), default="PENDING_REVIEW")
+    ocr_raw_text = Column(Text, nullable=True)
+    ocr_extracted_json = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     vehicle = relationship("Vehicle", back_populates="fuel_logs")
     shipment = relationship("Shipment", back_populates="fuel_logs")
     driver = relationship("User", back_populates="fuel_logs")
+
+class DriverNotification(Base):
+    __tablename__ = "driver_notifications"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    driver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    notification_type = Column(String(50), default="INFO")
+    is_read = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    driver = relationship("User")
 
 class AuditResult(Base):
     __tablename__ = "audit_results"

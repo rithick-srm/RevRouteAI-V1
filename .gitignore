@@ -22,3 +22,4 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+revroute_pre_driver_app_backup.db
